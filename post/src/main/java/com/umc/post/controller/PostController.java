@@ -4,6 +4,7 @@ import com.umc.post.data.dto.PostDto;
 import com.umc.post.data.entity.Post;
 import com.umc.post.service.PostService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.util.List;
 
@@ -16,6 +17,11 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
+
+//    @PostMapping("/uploadform")
+//    public void upload(@RequestPart MultipartHttpServletRequest post) {
+//        postService.uploadForm(postDto);
+//    }
 
     @PostMapping("/upload")
     public void upload(@RequestBody PostDto postDto) {
