@@ -1,5 +1,6 @@
 package com.umc.post.controller;
 
+import com.umc.post.config.security.TokenInfo;
 import com.umc.post.data.dto.UserInfoDto;
 import com.umc.post.data.dto.UserJoinDto;
 import com.umc.post.data.dto.UserLoginDto;
@@ -19,8 +20,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public void login(@RequestBody UserLoginDto userLoginDto) {
-        authService.login(userLoginDto);
+    public TokenInfo login(@RequestBody UserLoginDto userLoginDto) {
+        return authService.login(userLoginDto);
     }
 
     @PostMapping("/register")

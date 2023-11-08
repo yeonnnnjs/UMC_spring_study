@@ -36,10 +36,11 @@ public class JwtTokenProvider {
     }
 
     public TokenInfo generateToken(Authentication authentication) {
+        System.out.println(authentication);
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-
+        System.out.println("auth " + authorities);
         long now = (new Date()).getTime();
         Date accessTokenExpiration = new Date(now + 3600000); // 1h
         Date refreshTokenExpiration = new Date(now + 1209600000); // 14d
@@ -65,7 +66,7 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String accessToken) {
         Claims claims = parseClaims(accessToken);
-
+        System.out.println("log" + claims);
         if (claims.get("auth") == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }

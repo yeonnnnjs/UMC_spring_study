@@ -13,13 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
 @Service
-public class AuthServiceImpl implements AuthService{
+public class AuthServiceImpl implements AuthService, UserDetailsService {
 
     @Autowired
     private final UserRepository userRepository;
@@ -43,7 +45,8 @@ public class AuthServiceImpl implements AuthService{
         boolean matches = passwordEncoder.matches(userLoginDto.getPassword(), user.getPassword());
         if (!matches) throw new BadCredentialsException("아이디 혹은 비밀번호를 확인하세요.");
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUserId(), user.getPassword());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUserId(), user.getPassword(), user.getAuthorities());
+
         TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
         tokenInfo.setEmail(user.getUserId());
         tokenInfo.setMemberRole(user.getRole().toString());
@@ -55,8 +58,13 @@ public class AuthServiceImpl implements AuthService{
         User user = new User();
         user.setUserId(userJoinDto.getUserId());
         user.setPassword(passwordEncoder.encode(userJoinDto.getPassword()));
-        user.setRole(Role.valueOf(userJoinDto.getRole()));
-        user.setName(userJoinDto.getUserName());
+        if(userJoinDto.getRole().equals("ROLE_ADMIN")) {
+            user.setRole(Role.ADMIN);
+        }
+        else {
+            user.setRole(Role.USER);
+        }
+        user.setUserName(userJoinDto.getUserName());
         userRepository.save(user);
     }
 
@@ -64,5 +72,20 @@ public class AuthServiceImpl implements AuthService{
     public UserInfoDto info() {
         UserInfoDto userInfoDto = SecurityUtil.getCurrentMemberId();
         return userInfoDto;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        return userRepository.findByUserId(userId)
+                .map(this::createUserDetails)
+                .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다."));
+    }
+
+    private UserDetails createUserDetails(User user) {
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUsername())
+                .password(passwordEncoder.encode(user.getPassword()))
+                .roles(user.getRole().toString())
+                .build();
     }
 }
